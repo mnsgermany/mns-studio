@@ -454,7 +454,7 @@ let tt; const toast = (m, act) => { const t=$('#toast'); t.textContent=m;
   t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'), act?6000:2200); };
 const logo = (a,size='') => `<div class="plogo" style="--c:${a.c[0]}${size}"><img src="${LOGOS[a.id]}" alt="" width="128" height="128" decoding="async" loading="lazy" onerror="this.remove()"></div>`;
 
-$('#cnt').textContent = APPS.length;
+$('#cnt').textContent = APPS.filter(a=>a.lic).length; // только те, что уже продаются; «СКОРО» не считаем
 document.querySelector('.offline').innerHTML = ico('cloud')+'Нет сети — всё сохранится и отправится само';
 
 let cat='all', q='';
