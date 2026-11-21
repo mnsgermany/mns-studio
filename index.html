@@ -467,13 +467,17 @@ function renderApp(id){
 }
 
 // админка: видна только владельцу — бот сверяет его Telegram id по подписанному initData
-let ADMIN=false, INBOX=[], THREAD=null, threadTimer=null, inboxErr='';
+// карточка рисуется сразу из памяти телефона, свежие цифры приходят одним запросом в фоне
+let ADMIN=store.get('admin',false), INBOX=store.get('inbox',[]), THREAD=null, threadTimer=null, inboxErr='';
 const KIND = {help:'Вопрос', review:'Отзыв', idea:'Идея', reply:'Ты'};
 const when = ts => { const d=new Date(ts), now=new Date(); return d.toDateString()===now.toDateString()
   ? d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) : d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}); };
-async function checkAdmin(){ if(!LIVE()) return; try{ ADMIN=(await callBot('whoami')).admin===true; if(ADMIN) loadInbox(); }catch{} }
+async function checkAdmin(){ if(!LIVE()) return; renderAdminBox(); loadInbox(); }
 async function loadInbox(){
-  try{ const r=await callBot('inbox'); inboxErr=r.error||''; if(r.threads) INBOX=r.threads; }catch{ inboxErr='net'; }
+  let r; try{ r=await callBot('inbox'); }catch{ return; } // нет сети — остаётся то, что было
+  if(r.error==='auth'){ ADMIN=false; store.set('admin',false); store.set('inbox',[]); $('#adminbox').innerHTML=''; document.querySelector('.tab[data-tab=contact] .badge')?.remove(); return; }
+  ADMIN=true; store.set('admin',true); inboxErr=r.error||'';
+  if(r.threads){ INBOX=r.threads; store.set('inbox',INBOX); }
   renderAdminBox(); if($('#s-inbox').classList.contains('on')) renderInbox();
 }
 function renderAdminBox(){
@@ -827,7 +831,7 @@ function resumeOrder(){
   if(ORDER.paid){ drawBuy(); show('buy'); } // оплачено, но не активировано — сразу на нужный шаг
 }
 
-renderList(); renderKeys(); renderRate(); renderReviews(); net(); resumeOrder();
+renderList(); renderKeys(); renderRate(); renderReviews(); net(); resumeOrder(); renderAdminBox();
 addEventListener('DOMContentLoaded',()=>{ loadReviews(); flush(); loadMyKeys(); checkAdmin();
   if(LIVE()) callBot('price').then(p=>{ if(p.amount){ app('waveform').price=p.amount; renderList(); } }).catch(()=>{}); });
 </script>
