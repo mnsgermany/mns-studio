@@ -224,6 +224,26 @@ body.is-off .offline{display:flex}
 .users svg.i{width:16px;height:16px;color:var(--g1)}
 .users span{grid-column:1/-1;font-weight:600;font-size:10.5px;color:var(--muted);text-align:center}
 .top p{white-space:nowrap}
+.shots2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:-4px 0 0}
+.shot{display:block;padding:0;border-radius:14px;overflow:hidden;background:var(--card);border:1px solid var(--line);aspect-ratio:4/3}
+.shot img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s var(--ease)}
+.shot:active img{transform:scale(1.04)}
+.more-shots{display:flex;align-items:center;gap:8px;width:100%;margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--card);color:var(--muted);font-weight:700;font-size:13px;min-height:44px}
+.more-shots svg.i{width:16px;height:16px}.more-shots .chev-d{margin-left:auto;transform:rotate(90deg);transition:transform .2s var(--ease)}
+.more-shots.open .chev-d{transform:rotate(-90deg)}
+.shotstrip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin:8px -16px 0;padding:0 16px;scrollbar-width:none}
+.shotstrip::-webkit-scrollbar{display:none}
+.shotstrip[hidden]{display:none}
+.shotstrip .shot{flex:none;width:42%;scroll-snap-align:start}
+.lb{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.94);display:flex;flex-direction:column;justify-content:center}
+.lb[hidden]{display:none}
+.lb-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;width:100%}
+.lb-track::-webkit-scrollbar{display:none}
+.lb-slide{flex:none;width:100%;scroll-snap-align:center;display:grid;place-items:center;padding:0 12px}
+.lb-slide img{max-width:100%;max-height:78vh;border-radius:12px}
+.lb-x{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:12px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;color:#fff;z-index:1}
+.lb-x svg{transform:rotate(45deg)}
+.lb-n{text-align:center;color:var(--muted);font-weight:700;margin-top:14px}
 .kdl{margin-top:12px}
 .keyrow .inp{flex:1;min-width:0;height:auto}
 .inp.bad{border-color:#FF5C7A}
@@ -359,25 +379,26 @@ body.is-off .offline{display:flex}
   <button class="tab" data-tab="contact"><svg class="i"><use href="#send"/></svg>Связь</button>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="lb" id="lb" hidden role="dialog" aria-label="Скриншоты"></div>
 
 <script>
 const BOT = 'Qlab_waveform_bot', CHANNEL = 'waveform_mns';
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwTTvhiCWZYfyzo656ZFqG80t8DZE3oQLY2lLLQgPk2o4icM_6yJKi1ZvBGJCAWMaOl/exec'; // веб-приложение бота (Apps Script)
 // start — диплинки, которые бот уже понимает (Code.gs); у новых программ кодов пока нет
 const APPS = [
-  {id:'waveform', lic:'mac', where:'меню QLab Waveform → Лицензия…', req:['QLabWaveform-2','.wfreq'], name:'QLab Waveform', c:['#00C2FF','#2563EB'], cat:'sound', price:null, plat:['mac'], start:{mac:'mac'},
+  {id:'waveform', shots:5, lic:'mac', where:'меню QLab Waveform → Лицензия…', req:['QLabWaveform-2','.wfreq'], name:'QLab Waveform', c:['#00C2FF','#2563EB'], cat:'sound', price:null, plat:['mac'], start:{mac:'mac'},
    short:'Вейвформа играющих треков QLab', desc:'Окно с волной всех играющих кью QLab: видно, где трек, сколько осталось и что дальше.',
    feats:['Живая волна каждого играющего кью','Остаток времени крупно — видно из-за пульта','Работает поверх QLab, ничего не ломает']},
-  {id:'cuedeck', lic:'win', where:'Файл → Лицензия…', req:['CueDeck-1','.cdreq'], name:'CueDeck', c:['#22F5A3','#0EA371'], cat:'sound', price:599, plat:['win'], start:{win:'win'},
+  {id:'cuedeck', shots:6, lic:'win', where:'Файл → Лицензия…', req:['CueDeck-1','.cdreq'], name:'CueDeck', c:['#22F5A3','#0EA371'], cat:'sound', price:599, plat:['win'], start:{win:'win'},
    short:'QLab для Windows: аудио, видео, кью', desc:'Плеер шоу для Windows: кью-листы, аудио и видео на любые выходы, GO по пробелу.',
    feats:['Аудио на любые выходы и каналы, ASIO','Видео в любом месте экрана, слои в превью','Вейвформа встроена отдельной кнопкой','Русский и английский интерфейс']},
-  {id:'click', lic:'cmac', where:'меню Click Studio → Лицензия…', req:['ClickStudio-1','.csreq'], name:'Click Studio', c:['#FF7A1A','#FF3B5C'], cat:'sound', price:699, plat:['mac','win'], start:{mac:'cmac',win:'click'},
+  {id:'click', shots:4, lic:'cmac', where:'меню Click Studio → Лицензия…', req:['ClickStudio-1','.csreq'], name:'Click Studio', c:['#FF7A1A','#FF3B5C'], cat:'sound', price:699, plat:['mac','win'], start:{mac:'cmac',win:'click'},
    short:'Клик-треки под любую песню', desc:'Генерирует клик-трек и подсказки для музыкантов: темп, размер, смены — за пару минут.',
    feats:['Темп и размер по тактам','Голосовые подсказки частей','Экспорт в WAV для QLab и CueDeck']},
-  {id:'rider', lic:'rmac', where:'вверху «Пробный режим»', req:['RiderStudio-1','.rsreq'], name:'Rider Studio', c:['#A78BFA','#6D28D9'], cat:'docs', price:299, plat:['mac','win'], start:{mac:'rmac',win:'rwin'},
+  {id:'rider', shots:5, lic:'rmac', where:'вверху «Пробный режим»', req:['RiderStudio-1','.rsreq'], name:'Rider Studio', c:['#A78BFA','#6D28D9'], cat:'docs', price:299, plat:['mac','win'], start:{mac:'rmac',win:'rwin'},
    short:'Технический райдер и стейдж-план', desc:'Райдер на A4 и стейдж-план в 3/4 — красиво, без Word и фотошопа.',
    feats:['Стейдж-план в изометрии 3/4','Готовый райдер A4 в PDF','Шаблоны составов и оборудования']},
-  {id:'timer', lic:'smac', where:'вверху справа «Пробный режим»', req:['StageTimer-1','.streq'], name:'Stage Timer', c:['#FFCC33','#F59E0B'], cat:'show', price:499, plat:['mac','win'], start:{mac:'smac',win:'swin'},
+  {id:'timer', shots:6, lic:'smac', where:'вверху справа «Пробный режим»', req:['StageTimer-1','.streq'], name:'Stage Timer', c:['#FFCC33','#F59E0B'], cat:'show', price:499, plat:['mac','win'], start:{mac:'smac',win:'swin'},
    short:'Таймер для спикера, NDI', desc:'Обратный отсчёт и сообщения спикеру на отдельный экран или по NDI.',
    feats:['Таймер и сообщения на второй экран','NDI-выход','Управление с ноутбука режиссёра']},
   {id:'caller', name:'Show Caller', c:['#FF4D8D','#BE185D'], cat:'show', price:599, plat:['mac'], start:{},
@@ -451,6 +472,28 @@ function renderList(){
 
 const faqItem = ([qq,aa]) => `<details class="faq"><summary>${qq}${ico('plus')}</summary><div>${aa}</div></details>`;
 $('#faqlist').innerHTML = FAQ.map(faqItem).join('');
+// скриншоты: 2 превью сразу, остальные — в раскрывающейся ленте; тап — крупно (лёгкие превью грузятся только здесь)
+const shotSrc = (a,n,size) => `shots/${a.id}-${n}-${size}.webp`;
+function shotsHtml(a){
+  if(!a.shots) return '';
+  const th = n => `<button class="shot" data-shot="${a.id}:${n}" aria-label="Скриншот ${n} — ${a.name}"><img src="${shotSrc(a,n,'s')}" alt="" width="480" height="360" loading="lazy" decoding="async"></button>`;
+  const rest = Array.from({length:a.shots-2},(_,i)=>i+3);
+  return `<div class="shots2">${th(1)}${th(2)}</div>
+    ${rest.length?`<button class="more-shots" data-moreshots="1" aria-expanded="false">${ico('grid')}Ещё ${rest.length} фото<svg class="i chev-d"><use href="#right"/></svg></button>
+    <div class="shotstrip" hidden>${rest.map(th).join('')}</div>`:''}`;
+}
+function openShot(id, n){
+  const a=app(id), lb=$('#lb');
+  lb.innerHTML = `<button class="lb-x" data-lbclose="1" aria-label="Закрыть">${ico('plus')}</button>
+    <div class="lb-track">${Array.from({length:a.shots},(_,i)=>`<div class="lb-slide"><img src="${shotSrc(a,i+1,'l')}" alt="Скриншот ${i+1} — ${a.name}" loading="lazy" decoding="async"></div>`).join('')}</div>
+    <div class="lb-n" id="lbn">${n} / ${a.shots}</div>`;
+  lb.hidden=false; const tr=lb.querySelector('.lb-track');
+  tr.scrollLeft = (n-1)*tr.clientWidth;
+  tr.onscroll = () => { $('#lbn').textContent = `${Math.round(tr.scrollLeft/tr.clientWidth)+1} / ${a.shots}`; };
+  tg()?.BackButton?.show();
+}
+const closeShot = () => { const lb=$('#lb'); lb.hidden=true; lb.innerHTML=''; };
+
 function renderApp(id){
   const a = app(id);
   $('#s-app').innerHTML = `
@@ -461,6 +504,7 @@ function renderApp(id){
         <button class="btn buy shine" data-buy="${a.id}">Купить${a.price?` <span class="sprice">${tgStar}${a.price}</span>`:''}</button>
         <button class="btn try shine" data-try="${a.id}">Пробная</button>
       </div></div>
+    ${shotsHtml(a)}
     <div class="sec">Возможности</div>
     <ul class="feats">${a.feats.map(f=>`<li>${ico('check')}<span>${f}</span></li>`).join('')}</ul>
     <div class="sec" id="trial-sec">Скачать пробную</div>
@@ -679,6 +723,9 @@ document.addEventListener('click', async e=>{
   else if(d.inbox){ renderInbox(); show('inbox'); loadInbox(); }
   else if(d.thread){ openThread(d.thread); }
   else if(d.mod){ const [rid,v]=d.mod.split(':'); moderateFromApp(rid, v==='1'); }
+  else if(d.shot){ const [id,n]=d.shot.split(':'); openShot(id,+n); }
+  else if(d.moreshots){ const st=el.nextElementSibling; st.hidden=!st.hidden; el.setAttribute('aria-expanded',String(!st.hidden)); el.classList.toggle('open',!st.hidden); }
+  else if(d.lbclose){ closeShot(); }
   else if(d.restore){ restoreKey(+d.restore); }
   else if(d.activate){ const k=KEYS[+d.activate]; ORDER={app:k.app, step:'dl', paid:true, email:store.get('email','')}; saveOrder(); drawBuy(); show('buy'); }
   else if(d.upd){ const [id,p]=d.upd.split(':'); getTrial(app(id).start[p]); }
@@ -698,7 +745,7 @@ const net=()=>{ document.body.classList.toggle('is-off',!navigator.onLine); flus
 addEventListener('online',net); addEventListener('offline',net);
 addEventListener('DOMContentLoaded',()=>{ const t=tg(); if(!t) return;
   t.ready(); t.expand(); t.setHeaderColor?.('#07080C'); t.setBackgroundColor?.('#07080C'); t.BackButton.onClick(()=>{ const on=id=>$('#s-'+id).classList.contains('on');
-    if(on('buy')) renderApp(ORDER.app); else if(on('thread')){ renderInbox(); show('inbox'); } else if(on('inbox')) show('contact'); else show('home'); }); });
+    if(!$('#lb').hidden) closeShot(); else if(on('buy')) renderApp(ORDER.app); else if(on('thread')){ renderInbox(); show('inbox'); } else if(on('inbox')) show('contact'); else show('home'); }); });
 
 // покупка: сначала оплата, потом активация — «Скачать программу» или «Уже скачал» → e-mail + код компьютера → ключ.
 // Заказ лежит в localStorage: закрыл приложение или пропала сеть — продолжишь с того же шага
