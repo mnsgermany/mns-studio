@@ -495,7 +495,7 @@ document.addEventListener('click', async e=>{
   else if(d.r){ rating=+d.r; renderRate(); haptic(); }
   else if(d.copy){ if(await copyText(KEYS[+d.copy].key)){ el.classList.add('done'); el.innerHTML=ico('check'); tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Ключ скопирован');
       setTimeout(()=>{el.classList.remove('done'); el.innerHTML=ico('copy')},1600);} else toast('Не вышло — выдели ключ пальцем'); }
-  else if(d.trial){ const [id,p]=d.trial.split(':'); const s=app(id).start[p]; s?openBot(s):toast('Скоро в боте'); }
+  else if(d.trial){ const [id,p]=d.trial.split(':'); getTrial(app(id).start[p]); }
   else if(d.buy){ haptic(); app(d.buy).lic ? renderBuy(d.buy) : toast('Покупка скоро появится'); }
   else if(d.pick){ $('#reqfile').click(); }
   else if(d.paste){ pasteReq(); }
@@ -503,7 +503,7 @@ document.addEventListener('click', async e=>{
   else if(d.pay){ buyPay(el); }
   else if(d.cp){ const v=d.cp==='key'?ORDER.key:d.cp==='email'?ORDER.email:ORDER.email+'\n'+ORDER.key; if(await copyText(v)){ toast(d.cp==='all'?'E-mail и ключ скопированы':'Скопировано'); tg()?.HapticFeedback?.notificationOccurred?.('success'); } }
   else if(d.done){ ORDER=null; store.set('order',null); show('keys'); }
-  else if(d.try){ const a=app(d.try); if(a.plat.length===1){ const s=a.start[a.plat[0]]; s?openBot(s):toast('Скоро в боте'); } else $('#trial-sec').scrollIntoView({behavior:'smooth',block:'start'}); }
+  else if(d.try){ const a=app(d.try); if(a.plat.length===1){ getTrial(a.start[a.plat[0]]); } else $('#trial-sec').scrollIntoView({behavior:'smooth',block:'start'}); }
   else if(d.go){ openBot(d.go); }
   else if('channel' in d){ openLink(`https://t.me/${CHANNEL}`); }
 });
@@ -595,6 +595,25 @@ async function fetchKey(){
     try{ const r=await callBot('licence',{product:app(ORDER.app).lic,email:ORDER.email,code:ORDER.code}); if(r.key) return finish(r.key); }catch{}
     await new Promise(r=>setTimeout(r,2000));
   }
+}
+// «Пробная»: бот кидает установщик в чат, приложение остаётся открытым; не вышло — старый путь через бота
+let trialBusy=false;
+async function getTrial(v){
+  if(!v) return toast('Пробная скоро появится');
+  if(!LIVE()) return openBot(v);
+  if(trialBusy) return; trialBusy=true; toast('Отправляю пробную…');
+  try{
+    const r=await callBot('trial',{product:v});
+    if(r.ok){ tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Готово! Файл уже в чате с ботом'); }
+    else if(r.error==='none') toast('Пробная скоро появится');
+    else if(r.error==='chat' && tg()?.requestWriteAccess){
+      // человек пришёл из канала и не нажимал «Старт»: просим разрешение писать ему, не выходя из приложения
+      trialBusy=false;
+      return tg().requestWriteAccess(ok=>{ ok ? getTrial(v) : toast('Без разрешения бот не сможет прислать файл'); });
+    }
+    else openBot(v); // старый Telegram без requestWriteAccess или версия без файла в боте
+  }catch{ toast('Нет связи — попробуй ещё раз'); }
+  trialBusy=false;
 }
 const BUY_ERR = {email:'Проверь e-mail', code:'Проверь код компьютера', price:'Эта программа пока не продаётся', auth:'Открой приложение из Telegram', invoice:'Не удалось выставить счёт — попробуй ещё раз'};
 async function buyPay(){
