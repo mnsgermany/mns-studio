@@ -199,6 +199,9 @@ body.is-off .offline{display:flex}
 .reqbox.ok{border-color:rgba(34,245,163,.6);background:rgba(34,245,163,.06)}
 .reqbox input{display:block;width:100%;height:60px;border:0;outline:0;background:none;padding:0 64px 0 16px;font-size:19px;letter-spacing:.06em;color:var(--fg)}
 .reqbox.bad{border-color:#FF5C7A}
+.dl2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.dl2 .btn{min-height:56px;padding:0 10px;font-size:15px}
+.note svg.i{width:16px;height:16px;vertical-align:-3px;color:var(--g1)}
 .filebtn{margin-top:12px;min-height:48px;font-size:14px;color:var(--muted)}
 .pastebtn{position:absolute;right:8px;top:8px;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border-radius:12px;font-weight:800;font-size:14px;color:#031018;background:linear-gradient(90deg,var(--g1),var(--g2))}
 .pastebtn svg.i{width:18px;height:18px}
@@ -324,19 +327,19 @@ const BOT = 'Qlab_waveform_bot', CHANNEL = 'waveform_mns';
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwTTvhiCWZYfyzo656ZFqG80t8DZE3oQLY2lLLQgPk2o4icM_6yJKi1ZvBGJCAWMaOl/exec'; // веб-приложение бота (Apps Script)
 // start — диплинки, которые бот уже понимает (Code.gs); у новых программ кодов пока нет
 const APPS = [
-  {id:'waveform', lic:'mac', req:['QLabWaveform-2','.wfreq'], name:'QLab Waveform', c:['#00C2FF','#2563EB'], cat:'sound', price:null, plat:['mac'], start:{mac:'mac'},
+  {id:'waveform', lic:'mac', where:'меню QLab Waveform → Лицензия…', req:['QLabWaveform-2','.wfreq'], name:'QLab Waveform', c:['#00C2FF','#2563EB'], cat:'sound', price:null, plat:['mac'], start:{mac:'mac'},
    short:'Вейвформа играющих треков QLab', desc:'Окно с волной всех играющих кью QLab: видно, где трек, сколько осталось и что дальше.',
    feats:['Живая волна каждого играющего кью','Остаток времени крупно — видно из-за пульта','Работает поверх QLab, ничего не ломает']},
-  {id:'cuedeck', lic:'win', req:['CueDeck-1','.cdreq'], name:'CueDeck', c:['#22F5A3','#0EA371'], cat:'sound', price:599, plat:['win'], start:{win:'win'},
+  {id:'cuedeck', lic:'win', where:'Файл → Лицензия…', req:['CueDeck-1','.cdreq'], name:'CueDeck', c:['#22F5A3','#0EA371'], cat:'sound', price:599, plat:['win'], start:{win:'win'},
    short:'QLab для Windows: аудио, видео, кью', desc:'Плеер шоу для Windows: кью-листы, аудио и видео на любые выходы, GO по пробелу.',
    feats:['Аудио на любые выходы и каналы, ASIO','Видео в любом месте экрана, слои в превью','Вейвформа встроена отдельной кнопкой','Русский и английский интерфейс']},
-  {id:'click', lic:'cmac', req:['ClickStudio-1','.csreq'], name:'Click Studio', c:['#FF7A1A','#FF3B5C'], cat:'sound', price:699, plat:['mac','win'], start:{mac:'cmac',win:'click'},
+  {id:'click', lic:'cmac', where:'меню Click Studio → Лицензия…', req:['ClickStudio-1','.csreq'], name:'Click Studio', c:['#FF7A1A','#FF3B5C'], cat:'sound', price:699, plat:['mac','win'], start:{mac:'cmac',win:'click'},
    short:'Клик-треки под любую песню', desc:'Генерирует клик-трек и подсказки для музыкантов: темп, размер, смены — за пару минут.',
    feats:['Темп и размер по тактам','Голосовые подсказки частей','Экспорт в WAV для QLab и CueDeck']},
-  {id:'rider', lic:'rmac', req:['RiderStudio-1','.rsreq'], name:'Rider Studio', c:['#A78BFA','#6D28D9'], cat:'docs', price:299, plat:['mac','win'], start:{mac:'rmac',win:'rwin'},
+  {id:'rider', lic:'rmac', where:'вверху «Пробный режим»', req:['RiderStudio-1','.rsreq'], name:'Rider Studio', c:['#A78BFA','#6D28D9'], cat:'docs', price:299, plat:['mac','win'], start:{mac:'rmac',win:'rwin'},
    short:'Технический райдер и стейдж-план', desc:'Райдер на A4 и стейдж-план в 3/4 — красиво, без Word и фотошопа.',
    feats:['Стейдж-план в изометрии 3/4','Готовый райдер A4 в PDF','Шаблоны составов и оборудования']},
-  {id:'timer', lic:'smac', req:['StageTimer-1','.streq'], name:'Stage Timer', c:['#FFCC33','#F59E0B'], cat:'show', price:499, plat:['mac','win'], start:{mac:'smac',win:'swin'},
+  {id:'timer', lic:'smac', where:'вверху справа «Пробный режим»', req:['StageTimer-1','.streq'], name:'Stage Timer', c:['#FFCC33','#F59E0B'], cat:'show', price:499, plat:['mac','win'], start:{mac:'smac',win:'swin'},
    short:'Таймер для спикера, NDI', desc:'Обратный отсчёт и сообщения спикеру на отдельный экран или по NDI.',
    feats:['Таймер и сообщения на второй экран','NDI-выход','Управление с ноутбука режиссёра']},
   {id:'caller', name:'Show Caller', c:['#FF4D8D','#BE185D'], cat:'show', price:599, plat:['mac'], start:{},
@@ -504,8 +507,12 @@ document.addEventListener('click', async e=>{
   else if(d.buy){ haptic(); app(d.buy).lic ? renderBuy(d.buy) : toast('Покупка скоро появится'); }
   else if(d.pick){ $('#reqfile').click(); }
   else if(d.paste){ pasteReq(); }
-  else if(d.next){ buyNext(); }
-  else if(d.pay){ buyPay(el); }
+  else if(d.pay){ buyPay(); }
+  else if(d.dl){ buyDownload(); }
+  else if(d.dlp){ buyDownload(d.dlp); }
+  else if(d.dlback){ ORDER.pickPlat=false; drawBuy(); }
+  else if(d.have){ ORDER.pickPlat=false; go('data'); }
+  else if(d.act){ buyActivate(); }
   else if(d.cp){ const v=d.cp==='key'?ORDER.key:d.cp==='email'?ORDER.email:ORDER.email+'\n'+ORDER.key; if(await copyText(v)){ toast(d.cp==='all'?'E-mail и ключ скопированы':'Скопировано'); tg()?.HapticFeedback?.notificationOccurred?.('success'); } }
   else if(d.done){ ORDER=null; store.set('order',null); show('keys'); }
   else if(d.try){ const a=app(d.try); if(a.plat.length===1){ getTrial(a.start[a.plat[0]]); } else $('#trial-sec').scrollIntoView({behavior:'smooth',block:'start'}); }
@@ -518,43 +525,52 @@ addEventListener('online',net); addEventListener('offline',net);
 addEventListener('DOMContentLoaded',()=>{ const t=tg(); if(!t) return;
   t.ready(); t.expand(); t.setHeaderColor?.('#07080C'); t.setBackgroundColor?.('#07080C'); t.BackButton.onClick(()=>$('#s-buy').classList.contains('on')?renderApp(ORDER.app):show('home')); });
 
-// покупка: e-mail + файл запроса → оплата Stars → ключ. Заказ лежит в localStorage — обрыв сети его не теряет
+// покупка: сначала оплата, потом активация — «Скачать программу» или «Уже скачал» → e-mail + код компьютера → ключ.
+// Заказ лежит в localStorage: закрыл приложение или пропала сеть — продолжишь с того же шага
 let ORDER = store.get('order', null);
 const EMAIL_RE = /^[^\s@<>&]+@[^\s@<>&]+\.[a-z0-9-]+$/i;
 const prettyCode = c => c.match(/.{4}/g).join('-');
 const saveOrder = () => store.set('order', ORDER);
+const STEP_N = {pay:1, wait:1, dl:2, data:3, act:3, done:4}, STEP_T = ['Оплата','Скачай программу','Активация','Ключ'];
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
 function renderBuy(id){
-  if(!ORDER || ORDER.app!==id || ORDER.step==='done') ORDER = {app:id, step:'data', email:store.get('email','')};
+  if(!ORDER || ORDER.app!==id || ORDER.step==='done') ORDER = {app:id, step:'pay', email:store.get('email','')};
   saveOrder(); drawBuy(); show('buy');
 }
+function go(step){ ORDER.step=step; saveOrder(); drawBuy(); }
 function drawBuy(){
-  const a=app(ORDER.app), st=ORDER.step, n={data:1,pay:2,wait:2,done:3}[st];
+  const a=app(ORDER.app), st=ORDER.step, n=STEP_N[st];
   const priceTag = `<span class="sprice">${tgStar}${a.price||'—'}</span>`;
   let body;
-  if(st==='data') body = `
+  if(st==='pay' || st==='wait') body = `
+    <div class="sum"><div><span>Программа</span><b>${a.name}</b></div><div><span>Лицензия</span><b>1 компьютер</b></div><div><span>Итого</span><b>${priceTag}</b></div></div>
+    <button class="btn primary wide shine" data-pay="1" ${st==='wait'?'disabled':''}>${st==='wait'?'<span class="spinner"></span>Ждём оплату…':'Оплатить '+priceTag}</button>
+    <div class="hint center">Оплата — окном Telegram. Потом здесь же скачаешь программу и получишь ключ.</div>`;
+  else if(st==='dl') body = `
+    <div class="note">${ico('check')} Оплата прошла. Пробная и полная версия — один и тот же файл: ключ просто снимает ограничения.</div>
+    ${ORDER.pickPlat && a.plat.length>1
+      ? `<div class="dl2">${a.plat.map(p=>`<button class="btn primary shine" data-dlp="${p}">${ico(PLAT[p][0])}${PLAT[p][1]}</button>`).join('')}</div>
+         <button class="linkbtn" data-dlback="1">Назад</button>`
+      : `<div class="dl2"><button class="btn primary shine" data-dl="1">${ico('file')}Скачать программу</button>
+         <button class="btn ghost" data-have="1">${ico('check')}Уже скачал</button></div>`}
+    <div class="hint center">Установщик придёт в чат с ботом. Пользовался пробной — жми «Уже скачал».</div>`;
+  else if(st==='data' || st==='act') body = `
     <label for="bemail">E-mail для лицензии</label>
     <input id="bemail" class="inp" type="email" inputmode="email" autocomplete="email" placeholder="you@mail.ru" value="${esc(ORDER.email||'')}">
     <div class="err" id="eerr"></div>
-    ${a.req ? `<label for="reqtxt">Код компьютера</label>
+    <label for="reqtxt">Код компьютера</label>
     <div class="reqbox${ORDER.code?' ok':''}">
-      <input id="reqtxt" class="mono" inputmode="text" spellcheck="false" autocapitalize="characters" autocomplete="off" maxlength="80" placeholder="XXXX-XXXX-XXXX-XXXX" value="${esc(ORDER.code?prettyCode(ORDER.code):(ORDER.reqText||''))}">
+      <input id="reqtxt" class="mono" spellcheck="false" autocapitalize="characters" autocomplete="off" maxlength="80" placeholder="XXXX-XXXX-XXXX-XXXX" value="${esc(ORDER.code?prettyCode(ORDER.code):(ORDER.reqText||''))}">
       <button type="button" class="pastebtn" data-paste="1" aria-label="Вставить из буфера">${ico('copy')}</button>
     </div>
-    <div class="reqst" id="reqst">${reqStatus(a)}</div>
+    <div class="reqst" id="reqst">${reqStatus()}</div>
     <input type="file" id="reqfile" accept="${a.req[1]},.txt" hidden>
     <button type="button" class="btn ghost wide filebtn" data-pick="1">${ico('file')}Загрузить файл запроса ${a.req[1]}</button>
-    <div class="err" id="ferr"></div>` : ''}
-    <button class="btn primary wide shine" style="margin-top:12px" data-next="1">Дальше</button>`;
-  else if(st!=='done') body = `
-    <div class="sum"><div><span>Программа</span><b>${a.name}</b></div><div><span>E-mail</span><b>${esc(ORDER.email)}</b></div>
-    ${ORDER.code?`<div><span>Компьютер</span><b class="mono">${prettyCode(ORDER.code)}</b></div>`:''}
-    <div><span>Итого</span><b>${priceTag}</b></div></div>
-    <button class="btn primary wide shine" data-pay="1" ${st==='wait'?'disabled':''}>${st==='wait'?'<span class="spinner"></span>'+(ORDER.paid?'Оплачено, получаем ключ…':'Ждём оплату…'):'Оплатить '+priceTag}</button>
-    <div class="hint center">Оплата — окном Telegram. Пропадёт связь — заказ не потеряется: ключ придёт в чат бота и на почту.</div>
-    ${st==='pay'?'<button class="linkbtn" data-next="1">Изменить данные</button>':''}`;
+    <div class="err" id="ferr"></div>
+    <button class="btn primary wide shine" style="margin-top:12px" data-act="1" ${st==='act'?'disabled':''}>${st==='act'?'<span class="spinner"></span>Получаем ключ…':'Получить ключ'}</button>`;
   else body = `
     <div class="center"><div class="done-ico">${ico('check')}</div><h2 style="margin:0 0 4px">Готово!</h2>
-    <p style="margin:0;color:var(--muted)">В программе: Лицензия… → вставь e-mail и ключ</p></div>
+    <p style="margin:0;color:var(--muted)">В ${a.name}: ${a.where} — вставь e-mail и ключ</p></div>
     <div class="sec" style="margin:18px 0 6px">E-mail</div>
     <div class="keyrow"><div class="keyval mono">${esc(ORDER.email)}</div><button class="copy" data-cp="email" aria-label="Скопировать e-mail">${ico('copy')}</button></div>
     <div class="sec" style="margin:14px 0 6px">Ключ</div>
@@ -564,15 +580,16 @@ function drawBuy(){
     <div class="hint center">Ключ также в чате бота и на ${esc(ORDER.email)}</div>`;
   $('#s-buy').innerHTML = `<div style="--c:${a.c[0]};--c2:${a.c[1]}">
     <button class="back" data-app="${a.id}">${ico('left')}${a.name}</button>
-    <div class="steps">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>
-    <div class="buy-head">${logo(a)}<div><h2>${['Данные для лицензии','Оплата','Ключ'][n-1]}</h2><span>Шаг ${n} из 3</span></div></div>
+    <div class="steps">${[1,2,3,4].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>
+    <div class="buy-head">${logo(a)}<div><h2>${STEP_T[n-1]}</h2><span>Шаг ${n} из 4</span></div></div>
     ${body}</div>`;
   const f=$('#reqfile'); if(f) f.onchange=e=>readReq(e.target.files[0]);
-  const rt=$('#reqtxt'); if(rt) rt.oninput=e=>{ const a=app(ORDER.app); ORDER.reqText=e.target.value; ORDER.code=parseReq(e.target.value); ORDER.file=''; saveOrder();
-    $('.reqbox').classList.toggle('ok',!!ORDER.code); $('.reqbox').classList.remove('bad'); $('#reqst').innerHTML=reqStatus(a); $('#ferr').textContent=''; if(ORDER.code) haptic(); };
+  const rt=$('#reqtxt'); if(rt) rt.oninput=e=>{ ORDER.reqText=e.target.value; ORDER.code=parseReq(e.target.value); ORDER.file=''; saveOrder();
+    $('.reqbox').classList.toggle('ok',!!ORDER.code); $('.reqbox').classList.remove('bad'); $('#reqst').innerHTML=reqStatus(); $('#ferr').textContent=''; if(ORDER.code) haptic(); };
   const em=$('#bemail'); if(em) em.oninput=e=>{ ORDER.email=e.target.value.trim(); em.classList.remove('bad'); $('#eerr').textContent=''; saveOrder(); };
 }
-const reqStatus = a => ORDER.code ? `${ico('check')}Компьютер <b class="mono">${prettyCode(ORDER.code)}</b>` : 'В программе: Лицензия… → «Код этого компьютера»';
+const reqStatus = () => ORDER.code ? `${ico('check')}Компьютер <b class="mono">${prettyCode(ORDER.code)}</b>` : `В ${app(ORDER.app).name}: ${app(ORDER.app).where} — там код этого компьютера`;
+// как в активаторе: код с дефисами/пробелами или без, либо строка запроса «Префикс|код» из файла
 const parseReq = text => { const t=String(text||''), m=new RegExp(app(ORDER.app).req[0]+'\\|([0-9A-F]{16})','i').exec(t); if(m) return m[1].toUpperCase();
   if(/\|/.test(t)) return null; const h=t.replace(/[\s-]/g,''); return /^[0-9A-F]{16}$/i.test(h) ? h.toUpperCase() : null; };
 function setReq(text, name){
@@ -581,67 +598,78 @@ function setReq(text, name){
   ORDER.code=c; ORDER.file=name; ORDER.reqText=''; saveOrder(); haptic(); drawBuy();
 }
 function readReq(file){ if(!file) return; if(file.size>4096) return setReq('',''); const r=new FileReader(); r.onload=()=>setReq(r.result,file.name); r.readAsText(file); }
-async function pasteReq(){ try{ setReq(await navigator.clipboard.readText(),'из буфера'); }catch{ $('#ferr').textContent='Нет доступа к буферу — выбери файл'; } }
-function buyNext(){
-  if(ORDER.step==='pay'){ ORDER.step='data'; saveOrder(); return drawBuy(); }
-  const a=app(ORDER.app), e=(ORDER.email||'').toLowerCase();
-  if(!EMAIL_RE.test(e)){ $('#bemail').classList.add('bad'); $('#eerr').textContent='Проверь e-mail — на него оформим ключ'; return; }
-  if(a.req && !ORDER.code){ $('#ferr').textContent='Нужен код компьютера — ключ привязывается к нему'; $('.reqbox').classList.add('bad'); return; }
-  ORDER.email=e; store.set('email',e); ORDER.step='pay'; saveOrder(); drawBuy();
-}
+async function pasteReq(){ try{ setReq(await navigator.clipboard.readText(),'из буфера'); }catch{ $('#ferr').textContent='Нет доступа к буферу — вставь код вручную'; } }
 function finish(key){
   ORDER.key=key; ORDER.step='done'; saveOrder();
   store.set('keys',[{app:ORDER.app,date:new Date().toLocaleDateString('ru-RU'),key}, ...store.get('keys',KEYS)]);
   renderKeys(); tg()?.HapticFeedback?.notificationOccurred?.('success'); drawBuy();
 }
-async function fetchKey(){
-  // оплата подтверждается боту вебхуком за секунды: спрашиваем ключ несколько раз; не вышло — повтор при сети/следующем открытии
-  for(let i=0;i<10 && ORDER?.step==='wait';i++){
-    try{ const r=await callBot('licence',{product:app(ORDER.app).lic,email:ORDER.email,code:ORDER.code}); if(r.key) return finish(r.key); }catch{}
-    await new Promise(r=>setTimeout(r,2000));
-  }
-}
-// «Пробная»: бот кидает установщик в чат, приложение остаётся открытым; не вышло — старый путь через бота
+// «Пробная» и «Скачать программу»: бот кидает установщик в чат, приложение остаётся открытым. true — файл ушёл
 let trialBusy=false;
 async function getTrial(v){
-  if(!v) return toast('Пробная скоро появится');
-  if(!LIVE()) return openBot(v);
-  if(trialBusy) return; trialBusy=true; toast('Отправляю пробную…');
+  if(!v){ toast('Файл скоро появится'); return false; }
+  if(!LIVE()){ openBot(v); return false; }
+  if(trialBusy) return false; trialBusy=true; toast('Отправляю файл…');
+  let done=false;
   try{
     const r=await callBot('trial',{product:v});
-    if(r.ok){ tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Готово! Файл уже в чате с ботом', ['Открыть чат', ()=>openLink(`https://t.me/${BOT}`)]); }
-    else if(r.error==='none') toast('Пробная скоро появится');
+    if(r.ok){ done=true; tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Готово! Файл уже в чате с ботом', ['Открыть чат', ()=>openLink(`https://t.me/${BOT}`)]); }
+    else if(r.error==='none') toast('Файл скоро появится');
     else if(r.error==='chat' && tg()?.requestWriteAccess){
       // человек пришёл из канала и не нажимал «Старт»: просим разрешение писать ему, не выходя из приложения
       trialBusy=false;
-      return tg().requestWriteAccess(ok=>{ ok ? getTrial(v) : toast('Без разрешения бот не сможет прислать файл'); });
+      return new Promise(res=>tg().requestWriteAccess(ok=>{ if(ok) getTrial(v).then(res); else { toast('Без разрешения бот не сможет прислать файл'); res(false); } }));
     }
     else openBot(v); // старый Telegram без requestWriteAccess или версия без файла в боте
   }catch{ toast('Нет связи — попробуй ещё раз'); }
-  trialBusy=false;
+  trialBusy=false; return done;
 }
 const BUY_ERR = {email:'Проверь e-mail', code:'Проверь код компьютера', price:'Эта программа пока не продаётся', auth:'Открой приложение из Telegram', invoice:'Не удалось выставить счёт — попробуй ещё раз'};
 async function buyPay(){
-  const a=app(ORDER.app);
-  ORDER.step='wait'; saveOrder(); drawBuy();
-  if(!LIVE()) // превью вне Telegram: имитация оплаты
-    return setTimeout(()=>finish(`${a.req[0]}|${ORDER.email}|ДЕМО-${prettyCode(ORDER.code)}`),1400);
-  const back = m => { ORDER.step='pay'; saveOrder(); drawBuy(); if(m) toast(m); };
+  const a=app(ORDER.app); go('wait');
+  if(!LIVE()) return setTimeout(()=>{ ORDER.paid=true; go('dl'); },1200); // превью вне Telegram: имитация оплаты
+  const back = m => { go('pay'); if(m) toast(m); };
   try{
-    const r=await callBot('invoice',{product:a.lic,email:ORDER.email,code:ORDER.code});
-    if(r.key) return finish(r.key); // этот компьютер уже оплачен — ключ сразу
+    const r=await callBot('invoice',{product:a.lic});
+    if(r.paid){ ORDER.paid=true; return go('dl'); } // уже оплачено, но не активировано — второй раз не платим
     if(!r.link) return back(BUY_ERR[r.error]||'Что-то пошло не так — попробуй ещё раз');
     tg().openInvoice(r.link, status=>{
-      if(status==='paid'){ ORDER.paid=true; saveOrder(); drawBuy(); fetchKey(); }
+      if(status==='paid'){ ORDER.paid=true; tg()?.HapticFeedback?.notificationOccurred?.('success'); go('dl'); }
       else back(status==='cancelled'?'':'Оплата не прошла — попробуй ещё раз');
     });
   }catch{ back('Нет связи — попробуй ещё раз'); }
 }
-function resumeOrder(){
-  if(!ORDER || ORDER.step!=='wait') return;
-  if(ORDER.paid){ drawBuy(); show('buy'); fetchKey(); } else { ORDER.step='pay'; saveOrder(); }
+async function buyDownload(p){
+  const a=app(ORDER.app);
+  if(!p && a.plat.length>1){ ORDER.pickPlat=true; return drawBuy(); }
+  p = p || a.plat[0];
+  if(!LIVE()){ toast('Демо: установщик ушёл бы в чат'); ORDER.pickPlat=false; return go('data'); }
+  if(await getTrial(a.start[p])){ ORDER.pickPlat=false; go('data'); }
 }
-addEventListener('online', ()=>{ if(ORDER?.paid && ORDER.step==='wait') fetchKey(); });
+async function buyActivate(){
+  const a=app(ORDER.app), e=(ORDER.email||'').toLowerCase();
+  if(!EMAIL_RE.test(e)){ $('#bemail').classList.add('bad'); $('#eerr').textContent='Проверь e-mail — на него оформим ключ'; return; }
+  if(!ORDER.code){ $('#ferr').textContent='Нужен код компьютера — ключ привязывается к нему'; $('.reqbox').classList.add('bad'); return; }
+  ORDER.email=e; store.set('email',e); go('act');
+  if(!LIVE()) return setTimeout(()=>finish(`${a.req[0]}|${e}|ДЕМО-${prettyCode(ORDER.code)}`),1000);
+  // оплата доходит до бота вебхуком за секунды — спрашиваем ключ несколько раз
+  for(let i=0;i<10;i++){
+    try{
+      const r=await callBot('activate',{product:a.lic,email:e,code:ORDER.code});
+      if(r.key) return finish(r.key);
+      if(r.error){ go('data'); return toast(BUY_ERR[r.error]||'Что-то пошло не так — попробуй ещё раз'); }
+    }catch{ go('data'); return toast('Нет связи — попробуй ещё раз'); }
+    await sleep(2000);
+  }
+  go('data'); toast('Ключ не выдан: оплата ещё идёт или лицензия уже на другом компьютере. Напиши в «Связь»');
+}
+function resumeOrder(){
+  if(!ORDER || ORDER.step==='done') return;
+  if(ORDER.step==='wait') ORDER.step='pay'; // окно оплаты закрылось вместе с приложением; повторное «Оплатить» не спишет дважды
+  if(ORDER.step==='act') ORDER.step='data';
+  saveOrder();
+  if(ORDER.paid){ drawBuy(); show('buy'); } // оплачено, но не активировано — сразу на нужный шаг
+}
 
 renderList(); renderKeys(); renderRate(); renderReviews(); net(); resumeOrder();
 addEventListener('DOMContentLoaded',()=>{ loadReviews(); flush();
