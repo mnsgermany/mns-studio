@@ -424,6 +424,8 @@ async function callBot(action, body={}){
 const store = {get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}, set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const haptic = (t='light') => tg()?.HapticFeedback?.impactOccurred?.(t);
 const openLink = u => tg() ? tg().openTelegramLink(u) : window.open(u,'_blank');
+// в чат с ботом: Telegram открывает ссылку, но приложение оставляет поверх — закрываем его сами (заказ сохранён в памяти)
+const openChat = () => { openLink(`https://t.me/${BOT}`); if(tg()?.close) setTimeout(()=>tg().close(), 150); };
 const openBot = p => openLink(`https://t.me/${BOT}?start=${p}`);
 // act — необязательная кнопка в подсказке: [текст, функция]; с кнопкой подсказка висит дольше
 let tt; const toast = (m, act) => { const t=$('#toast'); t.textContent=m;
@@ -786,7 +788,7 @@ async function getTrial(v){
   let done=false;
   try{
     const r=await callBot('trial',{product:v});
-    if(r.ok){ done=true; tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Готово! Файл уже в чате с ботом', ['Открыть чат', ()=>openLink(`https://t.me/${BOT}`)]); }
+    if(r.ok){ done=true; tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Готово! Файл уже в чате с ботом', ['Открыть чат', openChat]); }
     else if(r.error==='none') toast('Файл скоро появится');
     else if(r.error==='chat' && tg()?.requestWriteAccess){
       // человек пришёл из канала и не нажимал «Старт»: просим разрешение писать ему, не выходя из приложения
