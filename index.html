@@ -199,6 +199,11 @@ body.is-off .offline{display:flex}
 .reqbox.ok{border-color:rgba(34,245,163,.6);background:rgba(34,245,163,.06)}
 .reqbox input{display:block;width:100%;height:60px;border:0;outline:0;background:none;padding:0 64px 0 16px;font-size:19px;letter-spacing:.06em;color:var(--fg)}
 .reqbox.bad{border-color:#FF5C7A}
+.kdl{margin-top:12px}
+.dl2.kdl{margin-top:8px}
+.kdl .btn,.btn.kdl{min-height:46px;font-size:14px}
+.kdl-t{display:flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;font-weight:700;color:var(--muted)}
+.kdl-t svg.i{width:16px;height:16px}
 .dl2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .dl2 .btn{min-height:56px;padding:0 10px;font-size:15px}
 .note svg.i{width:16px;height:16px;vertical-align:-3px;color:var(--g1)}
@@ -275,7 +280,7 @@ body.is-off .offline{display:flex}
 
   <section class="screen" id="s-keys">
     <div class="top"><div><h1>Мои ключи</h1><p>Все купленные лицензии в одном месте</p></div></div>
-    <div class="note">Ключ можно скопировать кнопкой и вставить в окно активации программы. Ключи сохраняются на телефоне и видны даже без интернета.</div>
+    <div class="note">Ключ копируется кнопкой. Здесь же — последняя версия каждой купленной программы: установи поверх, ключ останется. Ключи видны даже без интернета.</div>
     <div id="keylist"></div>
   </section>
 
@@ -356,10 +361,11 @@ const CATS = [['all','Все'],['sound','Звук'],['show','Шоу'],['docs','�
 const PLAT = {mac:['apple','macOS'],win:['win','Windows'],web:['globe','Браузер']};
 const FAQ = [
   ['Как работает пробная версия?','Скачиваешь, ставишь, работаешь. У каждой программы свой лимит пробной: время, число каналов или телефонов — написано на странице программы.'],
-  ['Как купить полную версию?','Жмёшь «Купить» — открывается бот, оплата в Telegram Stars прямо в чате. Ключ приходит в бот и появляется во вкладке «Ключи».'],
+  ['Как купить полную версию?','Жмёшь «Купить» и оплачиваешь Stars прямо в приложении. Дальше «Скачать программу» (или «Уже скачал», если стоит пробная), вводишь e-mail и код компьютера — и получаешь ключ. Он сохранится во вкладке «Ключи», придёт в чат бота и на почту.'],
   ['Ключ привязан к компьютеру?','Да, к железу одного компьютера. Сменил компьютер — напиши мне, перенесу.'],
   ['macOS пишет «неизвестный разработчик»','Открой программу правой кнопкой → «Открыть» → ещё раз «Открыть». Нужно один раз.'],
-  ['Обновления платные?','Нет, бесплатно в пределах версии. Новости — в канале.'],
+  ['Как обновить программу до новой версии?','Просто скачай программу заново: кнопка «Пробная» на странице программы или «Скачать последнюю версию» во вкладке «Ключи». Файл всегда самый свежий — пробная и полная версия это один и тот же установщик. Установи поверх старой: ключ и активация останутся на месте, вводить их заново не нужно.'],
+  ['Обновления платные?','Нет, бесплатно в пределах версии. О новых версиях пишу в канале.'],
   ['Можно вернуть деньги?','Напиши мне в «Связь», разберёмся по-человечески.'],
 ];
 // shortcut: демо-данные макета; при запуске ключи и отзывы отдаёт бот по initData
@@ -408,6 +414,7 @@ function renderList(){
 }
 
 const faqItem = ([qq,aa]) => `<details class="faq"><summary>${qq}${ico('plus')}</summary><div>${aa}</div></details>`;
+$('#faqlist').innerHTML = FAQ.map(faqItem).join('');
 function renderApp(id){
   const a = app(id);
   $('#s-app').innerHTML = `
@@ -436,7 +443,11 @@ function renderKeys(){
   $('#keylist').innerHTML = KEYS.length ? KEYS.map((k,i)=>{ const a=app(k.app); return `
     <div class="key"><div class="key-h">${logo(a)}<div><b>${a.name}</b><span>Куплено ${esc(k.date)}</span></div></div>
     <div class="keyrow"><div class="keyval mono">${esc(k.key)}</div>
-    <button class="copy" data-copy="${i}" aria-label="Скопировать ключ ${a.name}">${ico('copy')}</button></div></div>`}).join('')
+    <button class="copy" data-copy="${i}" aria-label="Скопировать ключ ${a.name}">${ico('copy')}</button></div>
+    ${a.plat.length>1
+      ? `<div class="kdl-t">${ico('file')}Скачать последнюю версию</div><div class="dl2 kdl">${a.plat.map(p=>`<button class="btn ghost" data-upd="${a.id}:${p}">${ico(PLAT[p][0])}${PLAT[p][1]}</button>`).join('')}</div>`
+      : `<button class="btn ghost wide kdl" data-upd="${a.id}:${a.plat[0]}">${ico('file')}Скачать последнюю версию</button>`}
+    <div class="hint">Установи поверх старой — ключ останется</div></div>`}).join('')
     : `<div class="empty">Ключей пока нет. Купи программу — ключ появится здесь.</div>`;
 }
 async function copyText(t){
@@ -508,6 +519,7 @@ document.addEventListener('click', async e=>{
   else if(d.pick){ $('#reqfile').click(); }
   else if(d.paste){ pasteReq(); }
   else if(d.pay){ buyPay(); }
+  else if(d.upd){ const [id,p]=d.upd.split(':'); getTrial(app(id).start[p]); }
   else if(d.dl){ buyDownload(); }
   else if(d.dlp){ buyDownload(d.dlp); }
   else if(d.dlback){ ORDER.pickPlat=false; drawBuy(); }
