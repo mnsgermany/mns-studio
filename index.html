@@ -200,6 +200,8 @@ body.is-off .offline{display:flex}
 .reqbox input{display:block;width:100%;height:60px;border:0;outline:0;background:none;padding:0 64px 0 16px;font-size:19px;letter-spacing:.06em;color:var(--fg)}
 .reqbox.bad{border-color:#FF5C7A}
 .kdl{margin-top:12px}
+.keyrow .inp{flex:1;min-width:0;height:auto}
+.inp.bad{border-color:#FF5C7A}
 .dl2.kdl{margin-top:8px}
 .kdl .btn,.btn.kdl{min-height:46px;font-size:14px}
 .kdl-t{display:flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;font-weight:700;color:var(--muted)}
@@ -364,6 +366,7 @@ const FAQ = [
   ['Как купить полную версию?','Жмёшь «Купить» и оплачиваешь Stars прямо в приложении. Дальше «Скачать программу» (или «Уже скачал», если стоит пробная), вводишь e-mail и код компьютера — и получаешь ключ. Он сохранится во вкладке «Ключи», придёт в чат бота и на почту.'],
   ['Ключ привязан к компьютеру?','Да, к железу одного компьютера. Сменил компьютер — напиши мне, перенесу.'],
   ['macOS пишет «неизвестный разработчик»','Открой программу правой кнопкой → «Открыть» → ещё раз «Открыть». Нужно один раз.'],
+  ['Почему не видны мои ключи?','Ключи подтягиваются из бота по твоему аккаунту Telegram. Если покупал до 21 ноября 2026, во вкладке «Ключи» будет программа и код компьютера: введи e-mail, на который оформлял ключ, — и ключ появится. Он также есть в чате с ботом и на почте. Покупал с другого аккаунта Telegram или ничего не видно — напиши в «Связь».'],
   ['Как обновить программу до новой версии?','Просто скачай программу заново: кнопка «Пробная» на странице программы или «Скачать последнюю версию» во вкладке «Ключи». Файл всегда самый свежий — пробная и полная версия это один и тот же установщик. Установи поверх старой: ключ и активация останутся на месте, вводить их заново не нужно.'],
   ['Обновления платные?','Нет, бесплатно в пределах версии. О новых версиях пишу в канале.'],
   ['Можно вернуть деньги?','Напиши мне в «Связь», разберёмся по-человечески.'],
@@ -438,17 +441,52 @@ function renderApp(id){
   show('app');
 }
 
+// «Ключи»: локальный список + покупки из бота (по Telegram-аккаунту). Три вида записей:
+// с ключом; старая покупка без e-mail (ключ показываем после ввода e-mail); оплачено, но не активировано
 function renderKeys(){
   KEYS = store.get('keys', KEYS);
-  $('#keylist').innerHTML = KEYS.length ? KEYS.map((k,i)=>{ const a=app(k.app); return `
-    <div class="key"><div class="key-h">${logo(a)}<div><b>${a.name}</b><span>Куплено ${esc(k.date)}</span></div></div>
+  const dl = a => a.plat.length>1
+    ? `<div class="kdl-t">${ico('file')}Скачать последнюю версию</div><div class="dl2 kdl">${a.plat.map(p=>`<button class="btn ghost" data-upd="${a.id}:${p}">${ico(PLAT[p][0])}${PLAT[p][1]}</button>`).join('')}</div>`
+    : `<button class="btn ghost wide kdl" data-upd="${a.id}:${a.plat[0]}">${ico('file')}Скачать последнюю версию</button>`;
+  $('#keylist').innerHTML = KEYS.length ? KEYS.map((k,i)=>{ const a=app(k.app);
+    const sub = k.unused ? 'Оплачено, ещё не активировано' : [k.date&&('Куплено '+esc(k.date)), k.code&&('Компьютер '+prettyCode(k.code))].filter(Boolean).join(' · ');
+    const head = `<div class="key-h">${logo(a)}<div><b>${a.name}</b><span>${sub}</span></div></div>`;
+    if(k.unused) return `<div class="key">${head}
+      <button class="btn primary wide shine" data-activate="${i}">${ico('key')}Активировать${k.unused>1?` (${k.unused})`:''}</button></div>`;
+    if(!k.key) return `<div class="key">${head}
+      <div class="hint" style="margin:0 0 8px">Покупка до 21 ноября 2026 — введи e-mail, на который оформлял ключ, и он появится здесь</div>
+      <div class="keyrow"><input id="rk${i}" class="inp" type="email" inputmode="email" autocomplete="email" placeholder="you@mail.ru" value="${esc(store.get('email',''))}" aria-label="E-mail для ключа ${a.name}">
+      <button class="copy" data-restore="${i}" aria-label="Показать ключ ${a.name}">${ico('right')}</button></div>
+      ${dl(a)}</div>`;
+    return `<div class="key">${head}
     <div class="keyrow"><div class="keyval mono">${esc(k.key)}</div>
     <button class="copy" data-copy="${i}" aria-label="Скопировать ключ ${a.name}">${ico('copy')}</button></div>
-    ${a.plat.length>1
-      ? `<div class="kdl-t">${ico('file')}Скачать последнюю версию</div><div class="dl2 kdl">${a.plat.map(p=>`<button class="btn ghost" data-upd="${a.id}:${p}">${ico(PLAT[p][0])}${PLAT[p][1]}</button>`).join('')}</div>`
-      : `<button class="btn ghost wide kdl" data-upd="${a.id}:${a.plat[0]}">${ico('file')}Скачать последнюю версию</button>`}
+    ${dl(a)}
     <div class="hint">Установи поверх старой — ключ останется</div></div>`}).join('')
     : `<div class="empty">Ключей пока нет. Купи программу — ключ появится здесь.</div>`;
+}
+const family = prefix => String(prefix).split('-')[0]; // QLabWaveform-1 и -2 — одна программа
+async function loadMyKeys(){
+  if(!LIVE()) return;
+  try{
+    const r=await callBot('mykeys'); if(!r.keys) return;
+    const remote = r.keys.map(k=>{ const a=APPS.find(x=>x.req && family(x.req[0])===family(k.prefix));
+      return a && {app:a.id, key:k.key||null, code:k.code||null, email:k.email||null, unused:k.unused||0}; }).filter(Boolean);
+    const local = store.get('keys',[]).filter(l => l.key && !remote.some(x => x.key===l.key || (l.code && x.code===l.code)));
+    // дата покупки есть только у локальных записей — переносим её
+    remote.forEach(x=>{ const old=store.get('keys',[]).find(l=>l.key&&l.key===x.key || l.code&&l.code===x.code); if(old&&old.date) x.date=old.date; });
+    store.set('keys',[...remote, ...local]); renderKeys();
+  }catch{}
+}
+async function restoreKey(i){
+  const k=KEYS[i], inp=$('#rk'+i), e=(inp.value||'').trim().toLowerCase();
+  if(!EMAIL_RE.test(e)){ inp.classList.add('bad'); return toast('Проверь e-mail'); }
+  try{
+    const r=await callBot('licence',{product:app(k.app).lic, email:e, code:k.code});
+    if(!r.key) return toast('Ключ не найден — напиши в «Связь»');
+    k.key=r.key; k.email=e; store.set('email',e); store.set('keys',KEYS); renderKeys();
+    tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Ключ на месте');
+  }catch{ toast('Нет связи — попробуй ещё раз'); }
 }
 async function copyText(t){
   try{ await navigator.clipboard.writeText(t); return true }catch{
@@ -509,7 +547,7 @@ document.addEventListener('click', async e=>{
   const d=el.dataset;
   if(d.cat){ cat=d.cat; document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===el)); renderList(); }
   else if(d.app){ haptic(); renderApp(d.app); }
-  else if(d.tab){ haptic(); if(d.kind) setKind(d.kind); if(d.prog) $('#rprog').value=d.prog; show(d.tab); }
+  else if(d.tab){ haptic(); if(d.kind) setKind(d.kind); if(d.prog) $('#rprog').value=d.prog; show(d.tab); if(d.tab==='keys') loadMyKeys(); }
   else if(d.kind){ setKind(d.kind); }
   else if(d.r){ rating=+d.r; renderRate(); haptic(); }
   else if(d.copy){ if(await copyText(KEYS[+d.copy].key)){ el.classList.add('done'); el.innerHTML=ico('check'); tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Ключ скопирован');
@@ -519,6 +557,8 @@ document.addEventListener('click', async e=>{
   else if(d.pick){ $('#reqfile').click(); }
   else if(d.paste){ pasteReq(); }
   else if(d.pay){ buyPay(); }
+  else if(d.restore){ restoreKey(+d.restore); }
+  else if(d.activate){ const k=KEYS[+d.activate]; ORDER={app:k.app, step:'dl', paid:true, email:store.get('email','')}; saveOrder(); drawBuy(); show('buy'); }
   else if(d.upd){ const [id,p]=d.upd.split(':'); getTrial(app(id).start[p]); }
   else if(d.dl){ buyDownload(); }
   else if(d.dlp){ buyDownload(d.dlp); }
@@ -613,7 +653,7 @@ function readReq(file){ if(!file) return; if(file.size>4096) return setReq('',''
 async function pasteReq(){ try{ setReq(await navigator.clipboard.readText(),'из буфера'); }catch{ $('#ferr').textContent='Нет доступа к буферу — вставь код вручную'; } }
 function finish(key){
   ORDER.key=key; ORDER.step='done'; saveOrder();
-  store.set('keys',[{app:ORDER.app,date:new Date().toLocaleDateString('ru-RU'),key}, ...store.get('keys',KEYS)]);
+  store.set('keys',[{app:ORDER.app,date:new Date().toLocaleDateString('ru-RU'),key,code:ORDER.code}, ...store.get('keys',KEYS).filter(k=>!(k.unused&&k.app===ORDER.app))]);
   renderKeys(); tg()?.HapticFeedback?.notificationOccurred?.('success'); drawBuy();
 }
 // «Пробная» и «Скачать программу»: бот кидает установщик в чат, приложение остаётся открытым. true — файл ушёл
@@ -684,7 +724,7 @@ function resumeOrder(){
 }
 
 renderList(); renderKeys(); renderRate(); renderReviews(); net(); resumeOrder();
-addEventListener('DOMContentLoaded',()=>{ loadReviews(); flush();
+addEventListener('DOMContentLoaded',()=>{ loadReviews(); flush(); loadMyKeys();
   if(LIVE()) callBot('price').then(p=>{ if(p.amount){ app('waveform').price=p.amount; renderList(); } }).catch(()=>{}); });
 </script>
 </body>
