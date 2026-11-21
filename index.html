@@ -220,6 +220,10 @@ body.is-off .offline{display:flex}
 .composer{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + var(--safe-b));width:min(528px,calc(100% - 24px));display:flex;gap:8px;align-items:flex-end;padding:8px;border-radius:20px;background:rgba(18,21,30,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);z-index:9}
 .composer textarea{flex:1;min-height:44px;max-height:140px;border:0;background:var(--bg2);border-radius:14px;padding:11px 12px;resize:none;font-size:16px}
 .composer .send{position:static;flex:none;width:44px;height:44px}
+.users{margin-left:auto;flex:none;display:grid;grid-template-columns:auto auto;align-items:center;column-gap:5px;padding:5px 11px;border-radius:14px;font-weight:800;font-size:15px;line-height:1.15;background:rgba(34,245,163,.1);border:1px solid rgba(34,245,163,.28);color:var(--fg);animation:in .4s var(--ease)}
+.users svg.i{width:16px;height:16px;color:var(--g1)}
+.users span{grid-column:1/-1;font-weight:600;font-size:10.5px;color:var(--muted);text-align:center}
+.top p{white-space:nowrap}
 .kdl{margin-top:12px}
 .keyrow .inp{flex:1;min-width:0;height:auto}
 .inp.bad{border-color:#FF5C7A}
@@ -276,6 +280,7 @@ body.is-off .offline{display:flex}
   <symbol id="cloud" viewBox="0 0 24 24"><path d="M2 2l20 20M5.8 8.3A5 5 0 0 0 7 18h10.5M20.8 15.6A4 4 0 0 0 17 10h-.6A6 6 0 0 0 9.5 6.3"/></symbol>
   <symbol id="tgstar" viewBox="0 0 24 24"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE27A"/><stop offset=".55" stop-color="#FFB800"/><stop offset="1" stop-color="#F08A00"/></linearGradient></defs><path fill="url(#sg)" stroke="#C46A00" stroke-width=".6" stroke-linejoin="round" d="M12 1.8c.5 0 .9.3 1.1.7l2.5 5.2 5.7.8c1 .1 1.4 1.4.7 2.1l-4.1 4 1 5.6c.2 1-.9 1.8-1.8 1.3L12 18.8l-5.1 2.7c-.9.5-2-.3-1.8-1.3l1-5.6-4.1-4c-.7-.7-.3-2 .7-2.1l5.7-.8 2.5-5.2c.2-.4.6-.7 1.1-.7z"/><path fill="#fff" opacity=".55" d="M12 4.2 10.3 7.9l-3.9.6c1.6.4 3.6.3 5.6-.6z"/></symbol>
   <symbol id="file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 18v-6M9 15l3-3 3 3"/></symbol>
+  <symbol id="people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/></symbol>
   <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
 </svg>
 
@@ -286,6 +291,7 @@ body.is-off .offline{display:flex}
     <div class="top">
       <div class="logo"><svg class="i"><use href="#wave"/></svg></div>
       <div><h1>MNS Studio</h1><p>Программы, игры, сервисы</p></div>
+      <div class="users" id="users" hidden></div>
     </div>
     <div class="hero">
       <h2>Цифровые помощники<br><span class="grad-text">на каждый день</span></h2>
@@ -465,6 +471,13 @@ function renderApp(id){
     </div>`;
   show('app');
 }
+
+// счётчик покупателей в углу главной: сразу из памяти, свежий — от бота (бот сбрасывает его кэш при каждой покупке)
+const plural = (n, f) => f[(n%10===1&&n%100!==11)?0:(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?1:2];
+function renderUsers(n){ const el=$('#users'); if(!n) return; el.hidden=false;
+  el.innerHTML=`${ico('people')}${n}<span>${plural(n,['пользователь','пользователя','пользователей'])}</span>`; el.setAttribute('aria-label',`${n} пользователей купили программы`); }
+async function loadUsers(){ renderUsers(store.get('buyers',0)); if(!LIVE()) return;
+  try{ const r=await callBot('stats'); if(r.buyers){ store.set('buyers',r.buyers); renderUsers(r.buyers); } }catch{} }
 
 // админка: видна только владельцу — бот сверяет его Telegram id по подписанному initData
 // карточка рисуется сразу из памяти телефона, свежие цифры приходят одним запросом в фоне
@@ -762,7 +775,7 @@ async function pasteReq(){ try{ setReq(await navigator.clipboard.readText(),'и�
 function finish(key){
   ORDER.key=key; ORDER.step='done'; saveOrder();
   store.set('keys',[{app:ORDER.app,date:new Date().toLocaleDateString('ru-RU'),key,code:ORDER.code}, ...store.get('keys',KEYS).filter(k=>!(k.unused&&k.app===ORDER.app))]);
-  renderKeys(); tg()?.HapticFeedback?.notificationOccurred?.('success'); drawBuy();
+  renderKeys(); tg()?.HapticFeedback?.notificationOccurred?.('success'); drawBuy(); loadUsers();
 }
 // «Пробная» и «Скачать программу»: бот кидает установщик в чат, приложение остаётся открытым. true — файл ушёл
 let trialBusy=false;
@@ -831,8 +844,8 @@ function resumeOrder(){
   if(ORDER.paid){ drawBuy(); show('buy'); } // оплачено, но не активировано — сразу на нужный шаг
 }
 
-renderList(); renderKeys(); renderRate(); renderReviews(); net(); resumeOrder(); renderAdminBox();
-addEventListener('DOMContentLoaded',()=>{ loadReviews(); flush(); loadMyKeys(); checkAdmin();
+renderList(); renderKeys(); renderRate(); renderReviews(); net(); resumeOrder(); renderAdminBox(); renderUsers(store.get('buyers',0));
+addEventListener('DOMContentLoaded',()=>{ loadReviews(); flush(); loadMyKeys(); checkAdmin(); loadUsers();
   if(LIVE()) callBot('price').then(p=>{ if(p.amount){ app('waveform').price=p.amount; renderList(); } }).catch(()=>{}); });
 </script>
 </body>
