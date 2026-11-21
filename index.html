@@ -69,6 +69,14 @@ body::before{content:"";position:fixed;inset:-30% -30% auto;height:80vh;z-index:
 .price small{display:block;font-weight:600;font-size:11px;color:var(--dim)}
 .star{color:var(--star)}
 .chev-r{color:var(--dim)}
+.pcard.soon{cursor:default}
+.pcard.soon > :not(.soon-tag){opacity:.42;filter:saturate(.35)}
+.pcard.soon:active{transform:none;background:var(--card)}
+.soon-tag{position:absolute;inset:0;z-index:1;display:grid;place-items:center;border-radius:inherit;
+  background:rgba(7,8,12,.38);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);
+  font-weight:900;font-size:15px;letter-spacing:.32em;text-indent:.32em;color:rgba(255,255,255,.92);text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.soon-tag::before{content:"";position:absolute;width:118px;height:34px;border-radius:999px;z-index:-1;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 
 .back{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 12px 0 6px;margin:-4px 0 8px -6px;border-radius:12px;color:var(--muted);font-weight:700}
 .detail-hero{border-radius:28px;padding:22px 20px;margin-bottom:16px;position:relative;overflow:hidden;color:#fff;background:linear-gradient(150deg,var(--c),var(--c2) 75%)}
@@ -383,11 +391,11 @@ $('#chips').innerHTML = CATS.map(([k,v])=>`<button class="chip${k==='all'?' on':
 function renderList(){
   const items = APPS.filter(a=>(cat==='all'||a.cat===cat) && (a.name+' '+a.short).toLowerCase().includes(q));
   $('#list').innerHTML = items.length ? items.map(a=>`
-    <button class="pcard" data-app="${a.id}" style="--c:${a.c[0]}">
+    <button class="pcard${a.lic?'':' soon'}" ${a.lic?`data-app="${a.id}"`:'disabled aria-disabled="true"'} style="--c:${a.c[0]}" aria-label="${a.name}${a.lic?'':' — скоро'}">${a.lic?'':'<span class="soon-tag">СКОРО</span>'}
       ${logo(a)}
       <div class="pbody"><h3>${a.name}</h3><p>${a.short}</p>
         <div class="tags">${a.plat.map(p=>`<span class="tag">${PLAT[p][1]}</span>`).join('')}</div></div>
-      <svg class="i chev-r"><use href="#right"/></svg>
+      ${a.lic?'<svg class="i chev-r"><use href="#right"/></svg>':''}
     </button>`).join('') : `<div class="empty">Ничего не нашлось</div>`;
 }
 
