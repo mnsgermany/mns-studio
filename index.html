@@ -303,7 +303,7 @@ body.is-off .offline{display:flex}
       <div id="rateBox"><label>Оценка</label><div class="rate" id="rate"></div></div>
       <label for="rtext" id="rlabel">Ваш отзыв</label>
       <textarea id="rtext" required maxlength="1000" placeholder="Что понравилось, где используете"></textarea>
-      <div class="hint" id="rhint">Отзыв опубликуется только после проверки разработчиком</div>
+      <div class="hint" id="rhint">Отзыв опубликуется после проверки. Отвечу в чате с ботом</div>
       <button class="btn primary wide" style="margin-top:14px">Отправить</button>
     </form>
     <div class="sec">Отзывы пользователей</div>
@@ -503,7 +503,7 @@ function setKind(k){
   $('#rateBox').style.display = k==='review'?'':'none';
   $('#rlabel').textContent = k==='review'?'Ваш отзыв':'Ваше предложение';
   $('#rtext').placeholder = k==='review'?'Что понравилось, где используете':'Что добавить или улучшить';
-  $('#rhint').textContent = k==='review'?'Отзыв опубликуется только после проверки разработчиком':'Предложение уйдёт лично разработчику';
+  $('#rhint').textContent = k==='review'?'Отзыв опубликуется после проверки. Отвечу в чате с ботом':'Предложение уйдёт лично мне, отвечу в чате с ботом';
 }
 function renderReviews(){
   const fresh = m => Date.now()-Date.parse(m.ts) < 3*864e5;
@@ -532,7 +532,9 @@ $('#rform').addEventListener('submit', e=>{
   store.set('outbox',[...store.get('outbox',[]),{kind,app:$('#rprog').value,rating:kind==='review'?rating:null,text,ts:new Date().toISOString()}]);
   $('#rtext').value=''; tg()?.HapticFeedback?.notificationOccurred?.('success');
   toast(kind==='review'?'Спасибо! Отзыв ушёл на модерацию':'Спасибо! Передал разработчику');
-  renderReviews(); flush();
+  renderReviews();
+  // чтобы мой ответ дошёл и тому, кто пришёл из канала и не нажимал «Старт»
+  if(LIVE() && tg().requestWriteAccess) tg().requestWriteAccess(()=>flush()); else flush();
 });
 
 function show(name){
