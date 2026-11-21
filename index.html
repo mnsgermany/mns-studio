@@ -168,6 +168,8 @@ textarea{min-height:110px;resize:vertical}
 .tab.on svg{color:var(--accent)}
 .toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-160%);padding:12px 18px;border-radius:14px;background:var(--fg);color:var(--bg);font-weight:800;z-index:20;transition:transform .3s var(--ease);max-width:calc(100% - 32px);text-align:center}
 .toast.on{transform:translate(-50%,0)}
+.toast{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+.toast-btn{height:36px;padding:0 14px;border-radius:10px;font-weight:800;font-size:14px;color:#031018;background:linear-gradient(90deg,var(--g1),var(--g2))}
 .offline{display:none;align-items:center;gap:8px;justify-content:center;padding:8px;margin:-4px 0 12px;border-radius:12px;background:rgba(255,204,51,.12);color:var(--star);font-size:13px;font-weight:700}
 body.is-off .offline{display:flex}
 
@@ -380,7 +382,10 @@ const store = {get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}cat
 const haptic = (t='light') => tg()?.HapticFeedback?.impactOccurred?.(t);
 const openLink = u => tg() ? tg().openTelegramLink(u) : window.open(u,'_blank');
 const openBot = p => openLink(`https://t.me/${BOT}?start=${p}`);
-let tt; const toast = m => { const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),2200); };
+// act — необязательная кнопка в подсказке: [текст, функция]; с кнопкой подсказка висит дольше
+let tt; const toast = (m, act) => { const t=$('#toast'); t.textContent=m;
+  if(act){ const b=document.createElement('button'); b.className='toast-btn'; b.textContent=act[0]; b.onclick=()=>{ t.classList.remove('on'); act[1](); }; t.append(b); }
+  t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'), act?6000:2200); };
 const logo = (a,size='') => `<div class="plogo" style="--c:${a.c[0]}${size}"><img src="${LOGOS[a.id]}" alt="" width="128" height="128" decoding="async" loading="lazy" onerror="this.remove()"></div>`;
 
 $('#cnt').textContent = APPS.length;
@@ -604,7 +609,7 @@ async function getTrial(v){
   if(trialBusy) return; trialBusy=true; toast('Отправляю пробную…');
   try{
     const r=await callBot('trial',{product:v});
-    if(r.ok){ tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Готово! Файл уже в чате с ботом'); }
+    if(r.ok){ tg()?.HapticFeedback?.notificationOccurred?.('success'); toast('Готово! Файл уже в чате с ботом', ['Открыть чат', ()=>openLink(`https://t.me/${BOT}`)]); }
     else if(r.error==='none') toast('Пробная скоро появится');
     else if(r.error==='chat' && tg()?.requestWriteAccess){
       // человек пришёл из канала и не нажимал «Старт»: просим разрешение писать ему, не выходя из приложения
